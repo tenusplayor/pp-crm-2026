@@ -167,13 +167,27 @@ async function uploadToGoogleDrive(filePath, filename, dateStr) {
   const monthFolderId = await getOrCreateFolder(drive, month, yearFolderId);
   const dayFolderId = await getOrCreateFolder(drive, day, monthFolderId);
 
-  await drive.files.create({
-    requestBody: { name: filename, parents: [dayFolderId] },
-    media: { mimeType: 'text/csv', body: fs.createReadStream(filePath) },
-    fields: 'id',
+  const media = { mimeType: 'text/csv', body: fs.createReadStream(filePath) };
+
+  const existing = await drive.files.list({
+    q: `name='${filename}' and '${dayFolderId}' in parents and trashed=false`,
+    fields: 'files(id)',
     supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
   });
-  console.log(`Uploaded to Google Drive: ${year}/${month}/${day}/${filename}`);
+
+  if (existing.data.files.length > 0) {
+    await drive.files.update({ fileId: existing.data.files[0].id, media, supportsAllDrives: true });
+    console.log(`Replaced in Google Drive: ${year}/${month}/${day}/${filename}`);
+  } else {
+    await drive.files.create({
+      requestBody: { name: filename, parents: [dayFolderId] },
+      media,
+      fields: 'id',
+      supportsAllDrives: true,
+    });
+    console.log(`Uploaded to Google Drive: ${year}/${month}/${day}/${filename}`);
+  }
 }
 
 async function run() {
