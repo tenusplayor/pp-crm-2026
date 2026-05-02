@@ -54,11 +54,11 @@ async function login(page, email, password) {
   console.log('Logging in...');
   await page.goto(`${BASE_URL}/users/sign_in`, { waitUntil: 'load' });
   await randomDelay(1000, 2000);
-  await page.fill('input[type="email"], input[name="email"], input[placeholder*="mail" i]', email);
+  await page.fill('input[type="email"], input[name="email"], input[id="user_email"], input[placeholder*="mail" i]', email);
   await randomDelay(400, 800);
-  await page.fill('input[type="password"], input[name="password"]', password);
+  await page.fill('input[type="password"], input[name="password"], input[id="user_password"]', password);
   await randomDelay(600, 1200);
-  await page.click('button[type="submit"]');
+  await page.click('button[type="submit"], input[type="submit"]');
   await page.waitForNavigation({ waitUntil: 'load', timeout: 15000 });
   console.log('Logged in. URL:', page.url());
 }
