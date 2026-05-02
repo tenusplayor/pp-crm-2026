@@ -2,14 +2,26 @@ name: Daily Payments Download
 
 on:
   schedule:
-    - cron: '0 9 * * *'  # 9 AM UTC = 2 AM Pacific, after midnight rollover
-  workflow_dispatch:      # allow manual trigger from GitHub UI
+    - cron: '0 9 * * *'  # 9 AM UTC = 2 AM Pacific
+  workflow_dispatch:      
+
+permissions:
+  contents: read
+  id-token: write # Required for Workload Identity
 
 jobs:
   download:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # 1. New Auth Step (Replaces the need for GOOGLE_SERVICE_ACCOUNT_JSON secret)
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/393436354282/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'payments-scraper@park-padel-crm-2026.iam.gserviceaccount.com'
 
       - uses: actions/setup-node@v4
         with:
@@ -27,5 +39,6 @@ jobs:
           PLAYTOMIC_EMAIL: ${{ secrets.PLAYTOMIC_EMAIL }}
           PLAYTOMIC_PASSWORD: ${{ secrets.PLAYTOMIC_PASSWORD }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
-          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          # 2. You can remove GOOGLE_SERVICE_ACCOUNT_JSON here. 
+          # The Google SDKs will now automatically find the credentials from Step 1.
         run: node download-payments.js
