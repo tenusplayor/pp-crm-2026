@@ -161,17 +161,19 @@ async function uploadToGoogleDrive(filePath, filename, dateStr) {
 
   const year = dateStr.slice(0, 4);
   const month = MONTH_NAMES[parseInt(dateStr.slice(5, 7), 10) - 1];
+  const day = dateStr.slice(8, 10);
 
   const yearFolderId = await getOrCreateFolder(drive, year, rootFolderId);
   const monthFolderId = await getOrCreateFolder(drive, month, yearFolderId);
+  const dayFolderId = await getOrCreateFolder(drive, day, monthFolderId);
 
   await drive.files.create({
-    requestBody: { name: filename, parents: [monthFolderId] },
+    requestBody: { name: filename, parents: [dayFolderId] },
     media: { mimeType: 'text/csv', body: fs.createReadStream(filePath) },
     fields: 'id',
     supportsAllDrives: true,
   });
-  console.log(`Uploaded to Google Drive: ${year}/${month}/${filename}`);
+  console.log(`Uploaded to Google Drive: ${year}/${month}/${day}/${filename}`);
 }
 
 async function run() {
