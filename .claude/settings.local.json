@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:third-party.playtomic.io)",
+      "Bash(curl:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzUxMiJ9.eyJhdXRob3JpdGllcyI6WyJST0xFX09SR0FOSVpBVElPTl9BUElfSU5URUdSQVRJT04iXSwiYXpwIjoiQVBJIENsaWVudCAtIFBhcmsgUGFkZWwiLCJ2ZXJzaW9uIjoiMSIsIlJPTEVfT1JHQU5JWkFUSU9OX0FQSV9JTlRFR1JBVElPTiI6eyJ0ZW5hbnRfaWRzIjpbIjA0MThhMTU5LWViY2ItNGJhMC05OGFhLTU2MGEyOGEyMmFkNSIsIjU1OTRlZWNhLWFkNzItNDA4Yi1iZWJjLTA5NGM2ZDI0NWUyNyIsImNlZjU5MzNmLWNkYjgtNGI5ZC05MGY3LTA1ZGM4NTJlZTE4MiJdLCJvcmdhbml6YXRpb25faWRzIjpbImU5ZGM0MmZmLWUwN2EtNDg3Zi1iN2Q5LTkyZjY4OTA5ZjVlMiJdfSwiYXVkIjoiaHR0cHM6Ly9hcGkucGxheXRvbWljLmlvIiwiaWF0IjoxNzc3MTM2Nzc2LCJleHAiOjE3NzcxNDAzNzYsImlzcyI6IkFuZW1vbmUgQXV0aCBTZXJ2aWNlIiwic3ViIjoiWlRBek5qRTRZMlF0WTJZeFlTMDBOR0U1TFRrM05UUXROVFZqTmpFNFpqazNZemxsIn0.W62u6vlMpyXwyBWFXCNTuJ_hasA_jTkPFM11B8tS3deKWSySL3yt7sksPD2OpnSlGaOm-LeruFjKRc6l9mibsQ\"\n\ncurl -s -G \"https://thirdparty.playtomic.io/api/v1/bookings\" \\\\\n  -H \"Authorization: Bearer $TOKEN\" \\\\\n  --data-urlencode \"tenant_id=cef5933f-cdb8-4b9d-90f7-05dc852ee182\" \\\\\n  --data-urlencode \"start_booking_date=2026-04-27T07:00:00\" \\\\\n  --data-urlencode \"end_booking_date=2026-04-28T06:59:59\" \\\\\n  --data-urlencode \"size=200\" | python3 -m json.tool)",
+      "Bash(ls:*)",
+      "Bash(npm init:*)",
+      "Bash(npx playwright:*)",
+      "Bash(node:*)",
+      "Skill(update-config)"
+    ]
+  }
+}
