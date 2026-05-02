@@ -52,7 +52,7 @@ function transactionsUrl(slug, dateStr) {
 
 async function login(page, email, password) {
   console.log('Logging in...');
-  await page.goto(`${BASE_URL}/login`, { waitUntil: 'load' });
+  await page.goto(`${BASE_URL}/users/sign_in`, { waitUntil: 'load' });
   await randomDelay(1000, 2000);
   await page.fill('input[type="email"], input[name="email"], input[placeholder*="mail" i]', email);
   await randomDelay(400, 800);
@@ -70,7 +70,7 @@ async function downloadForFacility(page, facility, dateStr, email, password) {
   console.log('Navigating to:', url);
   await page.goto(url, { waitUntil: 'load' });
 
-  if (page.url().includes('/login') || page.url().includes('/sign_in')) {
+  if (page.url().includes('/sign_in')) {
     console.log('Session expired — re-logging in...');
     await login(page, email, password);
     await page.goto(url, { waitUntil: 'load' });
