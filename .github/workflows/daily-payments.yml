@@ -34,11 +34,22 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Download and upload payments
+      - name: Download and upload Playtomic payments
         env:
           PLAYTOMIC_EMAIL: ${{ secrets.PLAYTOMIC_EMAIL }}
           PLAYTOMIC_PASSWORD: ${{ secrets.PLAYTOMIC_PASSWORD }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
-          # 2. You can remove GOOGLE_SERVICE_ACCOUNT_JSON here. 
-          # The Google SDKs will now automatically find the credentials from Step 1.
         run: node download-payments.js
+
+      - name: Download and upload Square payments
+        env:
+          SQUARE_ACCESS_TOKEN: ${{ secrets.SQUARE_ACCESS_TOKEN }}
+          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+        run: node download-square-payments.js
+
+      - name: Download and upload PlayByPoint payments
+        env:
+          PLAYBYPOINT_EMAIL: ${{ secrets.PLAYBYPOINT_EMAIL }}
+          PLAYBYPOINT_PASSWORD: ${{ secrets.PLAYBYPOINT_PASSWORD }}
+          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+        run: node download-playbypoint-payments.js
