@@ -81,7 +81,7 @@ async function downloadForFacility(page, facility, dateStr, email, password) {
   }
 
   console.log('Waiting for CSV export button...');
-  const csvBtn = page.locator('button, a').filter({ hasText: /csv/i }).first();
+  const csvBtn = page.locator('a[data-tooltip="Export to CSV"]');
   try {
     await csvBtn.waitFor({ state: 'visible', timeout: 60000 });
   } catch {
