@@ -135,11 +135,12 @@ const MONTH_NAMES = ['January','February','March','April','May','June','July','A
 
 async function getOrCreateFolder(drive, name, parentId) {
   const q = `name='${name}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`;
-  const res = await drive.files.list({ q, fields: 'files(id)', spaces: 'drive' });
+  const res = await drive.files.list({ q, fields: 'files(id)', spaces: 'drive', supportsAllDrives: true, includeItemsFromAllDrives: true });
   if (res.data.files.length > 0) return res.data.files[0].id;
   const folder = await drive.files.create({
     requestBody: { name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] },
     fields: 'id',
+    supportsAllDrives: true,
   });
   return folder.data.id;
 }
@@ -168,6 +169,7 @@ async function uploadToGoogleDrive(filePath, filename, dateStr) {
     requestBody: { name: filename, parents: [monthFolderId] },
     media: { mimeType: 'text/csv', body: fs.createReadStream(filePath) },
     fields: 'id',
+    supportsAllDrives: true,
   });
   console.log(`Uploaded to Google Drive: ${year}/${month}/${filename}`);
 }
