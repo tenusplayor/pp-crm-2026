@@ -3,7 +3,12 @@ name: Daily Payments Download
 on:
   schedule:
     - cron: '0 9 * * *'  # 9 AM UTC = 2 AM Pacific
-  workflow_dispatch:      
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Date to download (YYYY-MM-DD). Defaults to yesterday Pacific.'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -39,11 +44,11 @@ jobs:
           PLAYTOMIC_EMAIL: ${{ secrets.PLAYTOMIC_EMAIL }}
           PLAYTOMIC_PASSWORD: ${{ secrets.PLAYTOMIC_PASSWORD }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
-        run: node download-payments.js
+        run: node download-payments.js ${{ github.event.inputs.date && format('--date {0}', github.event.inputs.date) || '' }}
 
       - name: Download and upload PlayByPoint payments
         env:
           PLAYBYPOINT_EMAIL: ${{ secrets.PLAYBYPOINT_EMAIL }}
           PLAYBYPOINT_PASSWORD: ${{ secrets.PLAYBYPOINT_PASSWORD }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
-        run: node download-playbypoint-payments.js
+        run: node download-playbypoint-payments.js ${{ github.event.inputs.date && format('--date {0}', github.event.inputs.date) || '' }}
