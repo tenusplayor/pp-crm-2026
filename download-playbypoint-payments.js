@@ -21,6 +21,10 @@ const FACILITY_ARG = (() => {
   const i = process.argv.indexOf('--facility');
   return i !== -1 ? process.argv[i + 1] : null;
 })();
+const DATE_ARG = (() => {
+  const i = process.argv.indexOf('--date');
+  return i !== -1 ? process.argv[i + 1] : null;
+})();
 
 const EXPORTS_DIR = path.join(__dirname, 'exports');
 const BASE_URL = 'https://app.playbypoint.com';
@@ -184,7 +188,7 @@ async function run() {
     process.exit(1);
   }
 
-  const dateStr = yesterdayPacific();
+  const dateStr = DATE_ARG || yesterdayPacific();
   console.log(`Downloading PlayByPoint transactions for ${dateStr}`);
 
   const browser = await chromium.launch({ headless: !HEADED });
