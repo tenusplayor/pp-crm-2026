@@ -34,18 +34,14 @@ function randomDelay(minMs, maxMs) {
   return new Promise(r => setTimeout(r, ms));
 }
 
-function toYYYYMMDD(date) {
-  // Use local date (not UTC) to match the portal's timezone
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function yesterday() {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d;
+function yesterdayPacific() {
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date());
+  const [y, m, d] = today.split('-').map(Number);
+  const dt = new Date(y, m - 1, d - 1);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
 }
 
 function paymentsUrl(tenantId, dateStr) {
@@ -212,7 +208,7 @@ async function run() {
     process.exit(1);
   }
 
-  const dateStr = toYYYYMMDD(yesterday());
+  const dateStr = yesterdayPacific();
   console.log(`Downloading payments for ${dateStr}`);
 
   const browser = await chromium.launch({ headless: !HEADED });
