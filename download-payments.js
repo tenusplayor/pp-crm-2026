@@ -79,12 +79,14 @@ async function downloadForTenant(page, tenant, dateStr, email, password) {
   const url = paymentsUrl(tenant.id, dateStr);
   console.log('Navigating to:', url);
   await page.goto(url, { waitUntil: 'load' });
+  await randomDelay(2000, 3000); // let SPA router settle
 
-  // Re-login if the navigation redirected us to the login page
-  if (page.url().includes('/login')) {
+  // Re-login if the page is showing a login form (more reliable than URL check)
+  if (await page.locator('input[type="email"], input[type="password"]').first().isVisible().catch(() => false)) {
     console.log('Session expired — re-logging in...');
     await login(page, email, password);
     await page.goto(url, { waitUntil: 'load' });
+    await randomDelay(2000, 3000);
   }
 
   // Step 1: Wait for the ⋮ button — this confirms the page is fully loaded
