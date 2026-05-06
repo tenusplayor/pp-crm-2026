@@ -95,7 +95,7 @@ async function downloadForTenant(page, tenant, dateStr, email, password) {
   } catch {
     await page.screenshot({ path: path.join(EXPORTS_DIR, `debug_${tenant.name}.png`) });
     console.log(`No data or export unavailable for ${tenant.name} on ${dateStr} (screenshot saved). Skipping.`);
-    return;
+    return false;
   }
   await randomDelay(800, 1500);
   await dotsBtn.click();
@@ -131,6 +131,7 @@ async function downloadForTenant(page, tenant, dateStr, email, password) {
   console.log(`Saved: ${savePath}`);
 
   await uploadToGoogleDrive(savePath, filename, dateStr);
+  return true;
 }
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -224,13 +225,21 @@ async function run() {
   try {
     await login(page, email, password);
 
+    const skipped = [];
     for (const tenant of tenantsToRun) {
-      await downloadForTenant(page, tenant, dateStr, email, password);
+      const ok = await downloadForTenant(page, tenant, dateStr, email, password);
+      if (ok === false) skipped.push(tenant.name);
       if (tenantsToRun.indexOf(tenant) < tenantsToRun.length - 1) {
         const wait = Math.floor(Math.random() * 5000) + 8000; // 8–13s between tenants
         console.log(`Waiting ${(wait/1000).toFixed(1)}s before next tenant...`);
         await new Promise(r => setTimeout(r, wait));
       }
+    }
+
+    if (skipped.length > 0) {
+      console.error(`\nERROR: No data downloaded for: ${skipped.join(', ')}`);
+      await browser.close();
+      process.exit(1);
     }
 
     console.log('\nAll done.');

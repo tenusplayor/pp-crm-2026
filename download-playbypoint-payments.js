@@ -91,7 +91,7 @@ async function downloadForFacility(page, facility, dateStr, email, password) {
   } catch {
     await page.screenshot({ path: path.join(EXPORTS_DIR, `debug_pbp_${facility.name}.png`) });
     console.log(`No CSV button found for ${facility.name} on ${dateStr} (screenshot saved). Skipping.`);
-    return;
+    return false;
   }
 
   await randomDelay(800, 1500);
@@ -107,6 +107,7 @@ async function downloadForFacility(page, facility, dateStr, email, password) {
   console.log(`Saved: ${savePath}`);
 
   await uploadToGoogleDrive(savePath, filename, dateStr);
+  return true;
 }
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -198,13 +199,21 @@ async function run() {
   try {
     await login(page, email, password);
 
+    const skipped = [];
     for (const facility of facilitiesToRun) {
-      await downloadForFacility(page, facility, dateStr, email, password);
+      const ok = await downloadForFacility(page, facility, dateStr, email, password);
+      if (ok === false) skipped.push(facility.name);
       if (facilitiesToRun.indexOf(facility) < facilitiesToRun.length - 1) {
         const wait = Math.floor(Math.random() * 5000) + 8000;
         console.log(`Waiting ${(wait / 1000).toFixed(1)}s before next facility...`);
         await new Promise(r => setTimeout(r, wait));
       }
+    }
+
+    if (skipped.length > 0) {
+      console.error(`\nERROR: No data downloaded for: ${skipped.join(', ')}`);
+      await browser.close();
+      process.exit(1);
     }
 
     console.log('\nAll done.');
