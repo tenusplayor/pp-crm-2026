@@ -227,19 +227,46 @@ async function run() {
   try {
     await login(page, email, password);
 
-    const skipped = [];
-    for (const tenant of tenantsToRun) {
-      const ok = await downloadForTenant(page, tenant, dateStr, email, password);
-      if (ok === false) skipped.push(tenant.name);
-      if (tenantsToRun.indexOf(tenant) < tenantsToRun.length - 1) {
-        const wait = Math.floor(Math.random() * 5000) + 8000; // 8–13s between tenants
-        console.log(`Waiting ${(wait/1000).toFixed(1)}s before next tenant...`);
+    const RETRY_DELAYS_MS = [30000, 60000];
+    const queue = tenantsToRun.map(t => ({ tenant: t, attempt: 0, waitBefore: 0 }));
+    const failed = [];
+
+    while (queue.length > 0) {
+      const item = queue.shift();
+
+      if (item.waitBefore > 0) {
+        console.log(`Waiting ${item.waitBefore / 1000}s before retry ${item.attempt + 1}/3 for ${item.tenant.name}...`);
+        await new Promise(r => setTimeout(r, item.waitBefore));
+      }
+
+      let ok;
+      try {
+        ok = await downloadForTenant(page, item.tenant, dateStr, email, password);
+      } catch (err) {
+        console.error(`Error on ${item.tenant.name}: ${err.message}`);
+        ok = false;
+      }
+
+      if (ok === false) {
+        if (item.attempt < 2) {
+          queue.push({ ...item, attempt: item.attempt + 1, waitBefore: RETRY_DELAYS_MS[item.attempt] });
+          console.log(`Queued retry ${item.attempt + 2}/3 for ${item.tenant.name}`);
+        } else {
+          console.error(`Giving up on ${item.tenant.name} after 3 attempts`);
+          failed.push(item.tenant.name);
+        }
+      }
+
+      // Normal between-tenant pause between consecutive first-attempt items
+      if (queue.length > 0 && item.attempt === 0 && queue[0].attempt === 0) {
+        const wait = Math.floor(Math.random() * 5000) + 8000;
+        console.log(`Waiting ${(wait / 1000).toFixed(1)}s before next tenant...`);
         await new Promise(r => setTimeout(r, wait));
       }
     }
 
-    if (skipped.length > 0) {
-      console.error(`\nERROR: No data downloaded for: ${skipped.join(', ')}`);
+    if (failed.length > 0) {
+      console.error(`\nERROR: No data downloaded for: ${failed.join(', ')} after 3 attempts`);
       await browser.close();
       process.exit(1);
     }
