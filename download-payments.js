@@ -89,12 +89,32 @@ async function downloadForTenant(page, tenant, dateStr, email, password) {
     await randomDelay(2000, 3000);
   }
 
-  // Step 1: Wait for the ⋮ button — this confirms the page is fully loaded
+  // Step 1: Wait for the ⋮ button — this confirms the page is fully loaded.
+  // Try up to 3 times with increasing waits and a page reload between attempts.
   console.log('Waiting for page to fully load...');
   const dotsBtn = page.locator('button[aria-label="More"]').last();
-  try {
-    await dotsBtn.waitFor({ state: 'visible', timeout: 60000 });
-  } catch {
+  const waitTimeouts = [60000, 90000, 120000];
+  let found = false;
+  for (let i = 0; i < waitTimeouts.length; i++) {
+    try {
+      await dotsBtn.waitFor({ state: 'visible', timeout: waitTimeouts[i] });
+      found = true;
+      break;
+    } catch {
+      if (i < waitTimeouts.length - 1) {
+        console.log(`Button not found after ${waitTimeouts[i] / 1000}s, reloading page (attempt ${i + 2}/${waitTimeouts.length})...`);
+        await page.reload({ waitUntil: 'load' });
+        await randomDelay(3000, 5000);
+        if (await page.locator('input[type="email"], input[type="password"]').first().isVisible().catch(() => false)) {
+          console.log('Session expired after reload — re-logging in...');
+          await login(page, email, password);
+          await page.goto(url, { waitUntil: 'load' });
+          await randomDelay(3000, 5000);
+        }
+      }
+    }
+  }
+  if (!found) {
     await page.screenshot({ path: path.join(EXPORTS_DIR, `debug_${tenant.name}.png`) });
     console.log(`No data or export unavailable for ${tenant.name} on ${dateStr} (screenshot saved). Skipping.`);
     return false;
@@ -227,38 +247,22 @@ async function run() {
   try {
     await login(page, email, password);
 
-    const RETRY_DELAYS_MS = [30000, 60000];
-    const queue = tenantsToRun.map(t => ({ tenant: t, attempt: 0, waitBefore: 0 }));
     const failed = [];
 
-    while (queue.length > 0) {
-      const item = queue.shift();
-
-      if (item.waitBefore > 0) {
-        console.log(`Waiting ${item.waitBefore / 1000}s before retry ${item.attempt + 1}/3 for ${item.tenant.name}...`);
-        await new Promise(r => setTimeout(r, item.waitBefore));
-      }
-
+    for (let i = 0; i < tenantsToRun.length; i++) {
+      const tenant = tenantsToRun[i];
       let ok;
       try {
-        ok = await downloadForTenant(page, item.tenant, dateStr, email, password);
+        ok = await downloadForTenant(page, tenant, dateStr, email, password);
       } catch (err) {
-        console.error(`Error on ${item.tenant.name}: ${err.message}`);
+        console.error(`Error on ${tenant.name}: ${err.message}`);
         ok = false;
       }
-
-      if (ok === false) {
-        if (item.attempt < 2) {
-          queue.push({ ...item, attempt: item.attempt + 1, waitBefore: RETRY_DELAYS_MS[item.attempt] });
-          console.log(`Queued retry ${item.attempt + 2}/3 for ${item.tenant.name}`);
-        } else {
-          console.error(`Giving up on ${item.tenant.name} after 3 attempts`);
-          failed.push(item.tenant.name);
-        }
+      if (!ok) {
+        failed.push(tenant.name);
       }
 
-      // Normal between-tenant pause between consecutive first-attempt items
-      if (queue.length > 0 && item.attempt === 0 && queue[0].attempt === 0) {
+      if (i < tenantsToRun.length - 1) {
         const wait = Math.floor(Math.random() * 5000) + 8000;
         console.log(`Waiting ${(wait / 1000).toFixed(1)}s before next tenant...`);
         await new Promise(r => setTimeout(r, wait));
@@ -266,7 +270,7 @@ async function run() {
     }
 
     if (failed.length > 0) {
-      console.error(`\nERROR: No data downloaded for: ${failed.join(', ')} after 3 attempts`);
+      console.error(`\nERROR: No data downloaded for: ${failed.join(', ')}`);
       await browser.close();
       process.exit(1);
     }
