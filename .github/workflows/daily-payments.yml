@@ -2,7 +2,7 @@ name: Daily Payments Download
 
 on:
   schedule:
-    - cron: '30 16 * * *'  # 8:30 AM PST (UTC-8) / 9:30 AM PDT (UTC-7)
+    - cron: '0 20 * * *'   # 12:00 PM PST (UTC-8) / 1:00 PM PDT (UTC-7)
   workflow_dispatch:
     inputs:
       date:
