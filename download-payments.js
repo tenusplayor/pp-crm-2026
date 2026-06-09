@@ -71,6 +71,14 @@ async function login(page, email, password) {
   await page.click('button[type="submit"]');
   await page.waitForNavigation({ waitUntil: 'load', timeout: 15000 });
   console.log('Logged in. URL:', page.url());
+  await page.screenshot({ path: path.join(EXPORTS_DIR, 'debug_login.png') });
+
+  // Verify login actually succeeded
+  const stillOnLogin = await page.locator('input[type="password"]').first().isVisible().catch(() => false);
+  if (stillOnLogin) {
+    await page.screenshot({ path: path.join(EXPORTS_DIR, 'debug_login_failed.png') });
+    throw new Error('Login failed — still on login page after submit. Check credentials or login flow.');
+  }
 }
 
 async function downloadForTenant(page, tenant, dateStr, email, password) {
