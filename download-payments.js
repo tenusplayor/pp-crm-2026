@@ -62,7 +62,7 @@ function paymentsUrl(tenantId, dateStr) {
 
 async function login(page, email, password) {
   console.log('Logging in...');
-  await page.goto(`${BASE_URL}/login`, { waitUntil: 'load' });
+  await page.goto(`${BASE_URL}/login`, { waitUntil: 'networkidle' });
   await randomDelay(1000, 2000);
   await page.fill('input[type="email"], input[name="email"], input[placeholder*="mail" i]', email);
   await randomDelay(400, 800);
@@ -86,22 +86,20 @@ async function downloadForTenant(page, tenant, dateStr, email, password) {
 
   const url = paymentsUrl(tenant.id, dateStr);
   console.log('Navigating to:', url);
-  await page.goto(url, { waitUntil: 'load' });
-  await randomDelay(2000, 3000); // let SPA router settle
+  await page.goto(url, { waitUntil: 'networkidle' });
 
   // Re-login if the page is showing a login form (more reliable than URL check)
   if (await page.locator('input[type="email"], input[type="password"]').first().isVisible().catch(() => false)) {
     console.log('Session expired — re-logging in...');
     await login(page, email, password);
-    await page.goto(url, { waitUntil: 'load' });
-    await randomDelay(2000, 3000);
+    await page.goto(url, { waitUntil: 'networkidle' });
   }
 
   // Step 1: Wait for the ⋮ button — this confirms the page is fully loaded.
   // Try up to 3 times with increasing waits and a page reload between attempts.
   console.log('Waiting for page to fully load...');
   const dotsBtn = page.locator('button[aria-label="More"]').last();
-  const waitTimeouts = [60000, 90000, 120000];
+  const waitTimeouts = [30000, 60000, 90000];
   let found = false;
   for (let i = 0; i < waitTimeouts.length; i++) {
     try {
@@ -111,13 +109,11 @@ async function downloadForTenant(page, tenant, dateStr, email, password) {
     } catch {
       if (i < waitTimeouts.length - 1) {
         console.log(`Button not found after ${waitTimeouts[i] / 1000}s, reloading page (attempt ${i + 2}/${waitTimeouts.length})...`);
-        await page.reload({ waitUntil: 'load' });
-        await randomDelay(3000, 5000);
+        await page.reload({ waitUntil: 'networkidle' });
         if (await page.locator('input[type="email"], input[type="password"]').first().isVisible().catch(() => false)) {
           console.log('Session expired after reload — re-logging in...');
           await login(page, email, password);
-          await page.goto(url, { waitUntil: 'load' });
-          await randomDelay(3000, 5000);
+          await page.goto(url, { waitUntil: 'networkidle' });
         }
       }
     }
