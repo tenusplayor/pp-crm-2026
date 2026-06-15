@@ -98,12 +98,12 @@ async function downloadForTenant(page, tenant, dateStr, email, password) {
   // Step 1: Wait for the ⋮ button — this confirms the page is fully loaded.
   // Try up to 3 times with increasing waits and a page reload between attempts.
   console.log('Waiting for page to fully load...');
-  const dotsBtn = page.locator('button[aria-label="More"]').last();
+  const dotsBtn = page.locator('button[aria-label="More"]').first();
   const waitTimeouts = [30000, 60000, 90000];
   let found = false;
   for (let i = 0; i < waitTimeouts.length; i++) {
     try {
-      await dotsBtn.waitFor({ state: 'visible', timeout: waitTimeouts[i] });
+      await dotsBtn.waitFor({ state: 'attached', timeout: waitTimeouts[i] });
       found = true;
       break;
     } catch {
@@ -127,7 +127,7 @@ async function downloadForTenant(page, tenant, dateStr, email, password) {
   await dotsBtn.click();
 
   // Step 2: Wait for dropdown, then click "Export CSV"
-  const exportCsvItem = page.locator('[role="menuitem"], li, button').filter({ hasText: /export csv/i }).first();
+  const exportCsvItem = page.locator('div, [role="menuitem"], li, button').filter({ hasText: /^Export CSV$/i }).first();
   await exportCsvItem.waitFor({ state: 'visible', timeout: 5000 });
   await randomDelay(500, 1000);
   await exportCsvItem.click();
