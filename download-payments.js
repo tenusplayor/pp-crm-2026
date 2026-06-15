@@ -62,7 +62,7 @@ function paymentsUrl(tenantId, dateStr) {
 
 async function login(page, email, password) {
   console.log('Logging in...');
-  await page.goto(`${BASE_URL}/login`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE_URL}/login`, { waitUntil: 'load' });
   await randomDelay(1000, 2000);
   await page.fill('input[type="email"], input[name="email"], input[placeholder*="mail" i]', email);
   await randomDelay(400, 800);
@@ -86,13 +86,13 @@ async function downloadForTenant(page, tenant, dateStr, email, password) {
 
   const url = paymentsUrl(tenant.id, dateStr);
   console.log('Navigating to:', url);
-  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.goto(url, { waitUntil: 'load' });
 
   // Re-login if the page is showing a login form (more reliable than URL check)
   if (await page.locator('input[type="email"], input[type="password"]').first().isVisible().catch(() => false)) {
     console.log('Session expired — re-logging in...');
     await login(page, email, password);
-    await page.goto(url, { waitUntil: 'networkidle' });
+    await page.goto(url, { waitUntil: 'load' });
   }
 
   // Step 1: Wait for the ⋮ button — this confirms the page is fully loaded.
@@ -109,11 +109,11 @@ async function downloadForTenant(page, tenant, dateStr, email, password) {
     } catch {
       if (i < waitTimeouts.length - 1) {
         console.log(`Button not found after ${waitTimeouts[i] / 1000}s, reloading page (attempt ${i + 2}/${waitTimeouts.length})...`);
-        await page.reload({ waitUntil: 'networkidle' });
+        await page.reload({ waitUntil: 'load' });
         if (await page.locator('input[type="email"], input[type="password"]').first().isVisible().catch(() => false)) {
           console.log('Session expired after reload — re-logging in...');
           await login(page, email, password);
-          await page.goto(url, { waitUntil: 'networkidle' });
+          await page.goto(url, { waitUntil: 'load' });
         }
       }
     }
