@@ -87,19 +87,21 @@ async function downloadForTenant(page, tenant, dateStr, email, password) {
   const url = paymentsUrl(tenant.id, dateStr);
   console.log('Navigating to:', url);
   await page.goto(url, { waitUntil: 'load' });
+  await randomDelay(4000, 6000); // let SPA data fetch start before checking
 
   // Re-login if the page is showing a login form (more reliable than URL check)
   if (await page.locator('input[type="email"], input[type="password"]').first().isVisible().catch(() => false)) {
     console.log('Session expired — re-logging in...');
     await login(page, email, password);
     await page.goto(url, { waitUntil: 'load' });
+    await randomDelay(4000, 6000);
   }
 
   // Step 1: Wait for the ⋮ button — this confirms the page is fully loaded.
   // Try up to 3 times with increasing waits and a page reload between attempts.
   console.log('Waiting for page to fully load...');
   const dotsBtn = page.locator('button[aria-label="More"]').first();
-  const waitTimeouts = [30000, 60000, 90000];
+  const waitTimeouts = [60000, 90000, 120000];
   let found = false;
   for (let i = 0; i < waitTimeouts.length; i++) {
     try {
@@ -110,10 +112,12 @@ async function downloadForTenant(page, tenant, dateStr, email, password) {
       if (i < waitTimeouts.length - 1) {
         console.log(`Button not found after ${waitTimeouts[i] / 1000}s, reloading page (attempt ${i + 2}/${waitTimeouts.length})...`);
         await page.reload({ waitUntil: 'load' });
+        await randomDelay(4000, 6000);
         if (await page.locator('input[type="email"], input[type="password"]').first().isVisible().catch(() => false)) {
           console.log('Session expired after reload — re-logging in...');
           await login(page, email, password);
           await page.goto(url, { waitUntil: 'load' });
+          await randomDelay(4000, 6000);
         }
       }
     }
