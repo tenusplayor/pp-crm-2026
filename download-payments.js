@@ -254,6 +254,7 @@ async function run() {
 
   try {
     await login(page, email, password);
+    await randomDelay(6000, 9000); // let SPA fully initialize session state before navigating to payments
 
     const failed = [];
 
